@@ -1,46 +1,53 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-
-
+import "google/protobuf/timestamp.proto";
 
 option go_package = "../proto";
 
+service VaultService {
+  rpc CreateStream(Connect) returns (stream Secret);
+  rpc BroadcastSecret(Secret) returns (Close);
+}
 
 message Secret {
-  Credentials Credentials = 1;
-  Text Text = 2;
-  Binary Binary = 3;
-  BankCard BankCard = 4;
+  string id = 1 [(gogoproto.moretags) = "redis:\"id\""];
+  Credentials credentials = 2 [(gogoproto.jsontag) = "-"];
+  Text text = 3 [(gogoproto.jsontag) = "-"];  
+  Binary binary = 4 [(gogoproto.jsontag) = "-"];
+  BankCard bank_card = 5 [(gogoproto.jsontag) = "-"];
+  string metadata = 6 [(gogoproto.moretags) = "redis:\"metadata\""];
+  google.protobuf.Timestamp create_dt = 7 [(gogoproto.moretags) = "redis:\"create_dt\""];
+  google.protobuf.Timestamp update_dt = 8 [(gogoproto.moretags) = "redis:\"update_dt\""];
 }
 
 message Credentials {
   string login = 1 [(gogoproto.moretags) = "redis:\"login\""];
   string password = 2 [(gogoproto.moretags) = "redis:\"password\""];
-  string metadata = 3 [(gogoproto.moretags) = "redis:\"metadata\""];
-  string created_at = 4 [(gogoproto.moretags) = "redis:\"created_at\""];
-  string updated_at = 5 [(gogoproto.moretags) = "redis:\"updated_at\""];
 }
 
 message Text {
   string data = 1  [(gogoproto.moretags) = "redis:\"data\""];
-  string metadata = 2 [(gogoproto.moretags) = "redis:\"metadata\""];
-  string created_at = 3 [(gogoproto.moretags) = "redis:\"created_at\""];
-  string updated_at = 4 [(gogoproto.moretags) = "redis:\"updated_at\""];
 }
 
 message Binary {
   bytes data = 1  [(gogoproto.moretags) = "redis:\"data\""];
-  string metadata = 2 [(gogoproto.moretags) = "redis:\"metadata\""];
-  string created_at = 3 [(gogoproto.moretags) = "redis:\"created_at\""];
-  string updated_at = 4 [(gogoproto.moretags) = "redis:\"updated_at\""];
 }
 
 message BankCard {
   string number = 1 [(gogoproto.moretags) = "redis:\"number\""];
   string expiration_date = 2 [(gogoproto.moretags) = "redis:\"expiration_date\""];
   string holder_name = 3 [(gogoproto.moretags) = "redis:\"holder_name\""];
-  string metadata = 4 [ (gogoproto.moretags) = "redis:\"metadata\""];
-  string created_at = 5 [(gogoproto.moretags) = "redis:\"created_at\""];
-  string updated_at = 6 [(gogoproto.moretags) = "redis:\"updated_at\""];
 }
+
+message User {
+  string id = 1;
+  string name = 2;
+}
+
+message Connect {
+  User user = 1;
+  bool active = 2;
+}
+
+message Close {}

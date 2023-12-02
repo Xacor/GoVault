@@ -1,1 +1,3 @@
 # GoVault
+
+protoc -I=. -I=/home/xytrx/go/src -I=/home/xytrx/go/src/github.com/gogo/protobuf/protobuf --gogo_out=plugins=grpc,--gogofast_out=Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/struct.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types:./ *.proto
