@@ -12,13 +12,15 @@ service VaultService {
 
 message Secret {
   string id = 1 [(gogoproto.moretags) = "redis:\"id\""];
-  Credentials credentials = 2 [(gogoproto.jsontag) = "-"];
-  Text text = 3 [(gogoproto.jsontag) = "-"];  
-  Binary binary = 4 [(gogoproto.jsontag) = "-"];
-  BankCard bank_card = 5 [(gogoproto.jsontag) = "-"];
-  string metadata = 6 [(gogoproto.moretags) = "redis:\"metadata\""];
-  google.protobuf.Timestamp create_dt = 7 [(gogoproto.moretags) = "redis:\"create_dt\""];
-  google.protobuf.Timestamp update_dt = 8 [(gogoproto.moretags) = "redis:\"update_dt\""];
+  string name = 2 [(gogoproto.moretags) = "redis:\"name\""];
+  Credentials credentials = 3 [(gogoproto.jsontag) = "-"];
+  Text text = 4 [(gogoproto.jsontag) = "-"];  
+  Binary binary = 5 [(gogoproto.jsontag) = "-"];
+  BankCard bank_card = 6 [(gogoproto.jsontag) = "-"];
+  string metadata = 7 [(gogoproto.moretags) = "redis:\"metadata\""];
+  google.protobuf.Timestamp create_dt = 8 [(gogoproto.moretags) = "redis:\"create_dt\""];
+  google.protobuf.Timestamp update_dt = 9 [(gogoproto.moretags) = "redis:\"update_dt\""];
+  bool is_deleted = 10;
 }
 
 message Credentials {
