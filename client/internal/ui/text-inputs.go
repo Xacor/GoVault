@@ -26,10 +26,10 @@ var (
 )
 
 type editorModel struct {
-	focusIndex  int
-	forms       map[string][]textinput.Model
-	currentForm string
-	cursorMode  cursor.Mode
+	focusIndex int
+	forms      map[string][]textinput.Model
+	focusForm  string
+	cursorMode cursor.Mode
 }
 
 func initialEditorModel(secret *proto.Secret) editorModel {
@@ -40,14 +40,13 @@ func initialEditorModel(secret *proto.Secret) editorModel {
 			typeText:        {},
 			typeBinary:      {},
 		},
-		currentForm: typeCredentials, // TODO: draw form by secret type
+		focusForm: typeCredentials, // TODO: draw form by secret type
 	}
 
 	for i := range m.forms {
 		switch i {
 		case typeCredentials:
 			nameInput := newNameInput()
-			nameInput.Focus()
 
 			loginInput := textinput.New()
 			loginInput.Cursor.Style = cursorStyle
@@ -68,7 +67,6 @@ func initialEditorModel(secret *proto.Secret) editorModel {
 			m.forms[i] = []textinput.Model{nameInput, loginInput, passwordInput}
 		case typeBankCard:
 			nameInput := newNameInput()
-			nameInput.Focus()
 
 			numberInput := textinput.New()
 			numberInput.Cursor.Style = cursorStyle
@@ -126,7 +124,6 @@ func initialEditorModel(secret *proto.Secret) editorModel {
 
 		case typeBinary:
 			nameInput := newNameInput()
-			nameInput.Focus()
 
 			binaryInput := textinput.New()
 			binaryInput.Cursor.Style = cursorStyle
@@ -137,7 +134,6 @@ func initialEditorModel(secret *proto.Secret) editorModel {
 			m.forms[i] = []textinput.Model{nameInput, binaryInput}
 		case typeText:
 			nameInput := newNameInput()
-			nameInput.Focus()
 
 			textInput := textinput.New()
 			textInput.Cursor.Style = cursorStyle
@@ -168,6 +164,7 @@ func (m editorModel) Init() tea.Cmd {
 }
 
 func (m editorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -180,19 +177,23 @@ func (m editorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursorMode > cursor.CursorHide {
 				m.cursorMode = cursor.CursorBlink
 			}
-			cmds := make([]tea.Cmd, len(m.forms[m.currentForm]))
-			for i := range m.forms[m.currentForm] {
-				cmds[i] = m.forms[m.currentForm][i].Cursor.SetMode(m.cursorMode)
+			cmds := make([]tea.Cmd, len(m.forms[m.focusForm]))
+			for i := range m.forms[m.focusForm] {
+				cmds[i] = m.forms[m.focusForm][i].Cursor.SetMode(m.cursorMode)
 			}
 			return m, tea.Batch(cmds...)
 
+		// Set focus to current input
+		case "tab":
+			cmds = append(cmds, m.focus()...)
+
 		// Set focus to next input
-		case "tab", "shift+tab", "enter", "up", "down":
+		case "shift+tab", "enter", "up", "down":
 			s := msg.String()
 
 			// Did the user press enter while the submit button was focused?
 			// If so, exit.
-			if s == "enter" && m.focusIndex == len(m.forms[m.currentForm]) {
+			if s == "enter" && m.focusIndex == len(m.forms[m.focusForm]) {
 				return m, tea.Quit
 			}
 
@@ -203,28 +204,14 @@ func (m editorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusIndex++
 			}
 
-			if m.focusIndex > len(m.forms[m.currentForm]) {
+			if m.focusIndex > len(m.forms[m.focusForm]) {
 				m.focusIndex = 0
 			} else if m.focusIndex < 0 {
-				m.focusIndex = len(m.forms[m.currentForm])
+				m.focusIndex = len(m.forms[m.focusForm])
 			}
 
-			cmds := make([]tea.Cmd, len(m.forms[m.currentForm]))
-			for i := 0; i <= len(m.forms[m.currentForm])-1; i++ {
-				if i == m.focusIndex {
-					// Set focused state
-					cmds[i] = m.forms[m.currentForm][i].Focus()
-					m.forms[m.currentForm][i].PromptStyle = focusedStyle
-					m.forms[m.currentForm][i].TextStyle = focusedStyle
-					continue
-				}
-				// Remove focused state
-				m.forms[m.currentForm][i].Blur()
-				m.forms[m.currentForm][i].PromptStyle = noStyle
-				m.forms[m.currentForm][i].TextStyle = noStyle
-			}
+			cmds = append(cmds, m.focus()...)
 
-			return m, tea.Batch(cmds...)
 		}
 	}
 
@@ -235,12 +222,12 @@ func (m editorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *editorModel) updateInputs(msg tea.Msg) tea.Cmd {
-	cmds := make([]tea.Cmd, len(m.forms[m.currentForm]))
+	cmds := make([]tea.Cmd, len(m.forms[m.focusForm]))
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
-	for i := range m.forms[m.currentForm] {
-		m.forms[m.currentForm][i], cmds[i] = m.forms[m.currentForm][i].Update(msg)
+	for i := range m.forms[m.focusForm] {
+		m.forms[m.focusForm][i], cmds[i] = m.forms[m.focusForm][i].Update(msg)
 	}
 
 	return tea.Batch(cmds...)
@@ -249,15 +236,15 @@ func (m *editorModel) updateInputs(msg tea.Msg) tea.Cmd {
 func (m editorModel) View() string {
 	var b strings.Builder
 
-	for i := range m.forms[m.currentForm] {
-		b.WriteString(m.forms[m.currentForm][i].View())
-		if i < len(m.forms[m.currentForm])-1 {
+	for i := range m.forms[m.focusForm] {
+		b.WriteString(m.forms[m.focusForm][i].View())
+		if i < len(m.forms[m.focusForm])-1 {
 			b.WriteRune('\n')
 		}
 	}
 
 	button := &blurredButton
-	if m.focusIndex == len(m.forms[m.currentForm]) {
+	if m.focusIndex == len(m.forms[m.focusForm]) {
 		button = &focusedButton
 	}
 	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
@@ -267,4 +254,22 @@ func (m editorModel) View() string {
 	b.WriteString(helpStyle.Render(" (ctrl+r to change style)"))
 
 	return b.String()
+}
+
+func (m *editorModel) focus() []tea.Cmd {
+	cmds := make([]tea.Cmd, len(m.forms[m.focusForm]))
+	for i := 0; i <= len(m.forms[m.focusForm])-1; i++ {
+		if i == m.focusIndex {
+			// Set focused state
+			cmds[i] = m.forms[m.focusForm][i].Focus()
+			m.forms[m.focusForm][i].PromptStyle = focusedStyle
+			m.forms[m.focusForm][i].TextStyle = focusedStyle
+			continue
+		}
+		// Remove focused state
+		m.forms[m.focusForm][i].Blur()
+		m.forms[m.focusForm][i].PromptStyle = noStyle
+		m.forms[m.focusForm][i].TextStyle = noStyle
+	}
+	return cmds
 }
