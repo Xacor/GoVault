@@ -68,14 +68,14 @@ func newListKeyMap() *listKeyMap {
 	}
 }
 
-type model struct {
+type listModel struct {
 	list         list.Model
 	inputs       textinput.Model
 	keys         *listKeyMap
 	delegateKeys *delegateKeyMap
 }
 
-func NewModel(secrets []*proto.Secret) model {
+func initialListModel(secrets []*proto.Secret) listModel {
 	var (
 		delegateKeys = newDelegateKeyMap()
 		listKeys     = newListKeyMap()
@@ -114,18 +114,18 @@ func NewModel(secrets []*proto.Secret) model {
 		}
 	}
 
-	return model{
+	return listModel{
 		list:         secretesList,
 		keys:         listKeys,
 		delegateKeys: delegateKeys,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m listModel) Init() tea.Cmd {
 	return tea.EnterAltScreen
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m listModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -183,7 +183,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
+func (m listModel) View() string {
 	return appStyle.Render(m.list.View())
 }
 

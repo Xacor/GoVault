@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/Xacor/go-vault/client/internal/ui"
-	"github.com/Xacor/go-vault/proto"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -49,27 +48,27 @@ func main() {
 	// 	}
 	// }()
 	// <-done
-	items := []*proto.Secret{
-		{
-			Name: "Doyki.com",
-			Credentials: &proto.Credentials{
-				Login:    "nagibator1337",
-				Password: "PutinLox123",
-			},
-		},
-		{
-			Name:     "Debit card",
-			BankCard: &proto.BankCard{},
-		},
-		{
-			Name: "Very secret note",
-			Text: &proto.Text{
-				Data: "dont tread on me",
-			},
-		},
-	}
+	// items := []*proto.Secret{
+	// 	{
+	// 		Name: "youtube.com",
+	// 		Credentials: &proto.Credentials{
+	// 			Login:    "nagibator1337",
+	// 			Password: "PutinLox123",
+	// 		},
+	// 	},
+	// 	{
+	// 		Name:     "Debit card",
+	// 		BankCard: &proto.BankCard{},
+	// 	},
+	// 	{
+	// 		Name: "Very secret note",
+	// 		Text: &proto.Text{
+	// 			Data: "dont tread on me",
+	// 		},
+	// 	},
+	// }
 
-	p := tea.NewProgram(ui.NewModel(items))
+	p := tea.NewProgram(ui.InitialInputsModel())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
